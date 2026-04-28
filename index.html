@@ -415,10 +415,56 @@
     let editingRowId = null;
     let currentEditingValues = {};
 
+    // Função para converter data local para UTC sem alterar o dia
+    function localDateToUTC(dateString) {
+        if (!dateString) return null;
+        // Cria a data no formato UTC para manter o mesmo dia
+        const [year, month, day] = dateString.split('-');
+        // Retorna no formato ISO sem conversão de timezone
+        return `${year}-${month}-${day}`;
+    }
+
+    // Função para formatar data para exibição local
+    function formatDateForDisplay(dateString) {
+        if (!dateString) return '-';
+        try {
+            // Se for uma string ISO completa, extrai apenas a data
+            if (dateString.includes('T')) {
+                dateString = dateString.split('T')[0];
+            }
+            const [year, month, day] = dateString.split('-');
+            // Retorna no formato DD/MM/YYYY
+            return `${day}/${month}/${year}`;
+        } catch (e) {
+            return dateString;
+        }
+    }
+
+    // Função para verificar atraso considerando apenas a data (sem timezone)
+    function isDelayed(item) {
+        if (item.status === "concluido") return false;
+        if (!item.deadline) return false;
+        
+        // Pega a data atual no timezone local
+        const today = new Date();
+        const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+        
+        // Extrai ano, mês, dia do deadline
+        const deadlineStr = item.deadline.includes('T') ? item.deadline.split('T')[0] : item.deadline;
+        const [year, month, day] = deadlineStr.split('-');
+        const deadlineDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+        
+        return deadlineDate < todayUTC;
+    }
+
     function getDefaultDeadline(daysOffset = 45) {
         const d = new Date();
         d.setDate(d.getDate() + daysOffset);
-        return d.toISOString().split('T')[0];
+        // Retorna no formato YYYY-MM-DD sem conversão de timezone
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     // Função para exportar para Excel
@@ -426,10 +472,7 @@
         try {
             showLoading(true);
             
-            // Preparar dados para exportação
             const exportData = [];
-            
-            // Cabeçalhos
             const headers = [
                 'departamento',
                 'nome',
@@ -441,18 +484,15 @@
                 'prazo'
             ];
             
-            // Mapeamento de status para exibição
             const statusMap = {
                 'pendente': '⏳ Pendente',
                 'andamento': '⚙️ Em andamento',
                 'concluido': '✅ Concluído'
             };
             
-            // Coletar todos os dados
             for (let dep of departamentos) {
                 const items = appData[dep.id] || [];
                 for (let item of items) {
-                    // Calcular prazo
                     let prazoStatus = '';
                     if (item.status === 'concluido') {
                         prazoStatus = '✅ Concluído';
@@ -463,19 +503,18 @@
                     }
                     
                     exportData.push({
-                        departamento: dep.nome.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').trim(), // Remove emojis
+                        departamento: dep.nome.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').trim(),
                         nome: item.nome,
                         prioridade: item.prioridade,
                         status: statusMap[item.status] || item.status,
                         area: item.area || '',
                         responsavel: item.responsavel || '',
-                        deadline: item.deadline ? new Date(item.deadline).toLocaleDateString('pt-BR') : '',
+                        deadline: item.deadline ? formatDateForDisplay(item.deadline) : '',
                         prazo: prazoStatus
                     });
                 }
             }
             
-            // Criar worksheet
             const wsData = [headers, ...exportData.map(row => [
                 row.departamento,
                 row.nome,
@@ -488,21 +527,12 @@
             ])];
             
             const ws = XLSX.utils.aoa_to_sheet(wsData);
-            
-            // Ajustar largura das colunas
             const colWidths = [
-                { wch: 25 }, // departamento
-                { wch: 40 }, // nome
-                { wch: 12 }, // prioridade
-                { wch: 18 }, // status
-                { wch: 25 }, // area
-                { wch: 25 }, // responsavel
-                { wch: 15 }, // deadline
-                { wch: 15 }  // prazo
+                { wch: 25 }, { wch: 40 }, { wch: 12 }, { wch: 18 },
+                { wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 15 }
             ];
             ws['!cols'] = colWidths;
             
-            // Estilizar cabeçalho
             const range = XLSX.utils.decode_range(ws['!ref']);
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const address = XLSX.utils.encode_cell({ r: 0, c: C });
@@ -514,17 +544,13 @@
                 };
             }
             
-            // Criar workbook
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Migracao_MHNET");
             
-            // Gerar nome do arquivo com data atual
             const now = new Date();
             const fileName = `Migracao_VALENET_MHNET_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.xlsx`;
             
-            // Exportar
             XLSX.writeFile(wb, fileName);
-            
             updateSyncStatus(true, `Exportado ${exportData.length} tarefas`);
         } catch (error) {
             console.error('Erro ao exportar Excel:', error);
@@ -535,7 +561,6 @@
         }
     }
 
-    // Criar tabela no Supabase
     async function createTables() {
         try {
             const { error } = await supabaseClient
@@ -543,7 +568,7 @@
                 .select('count', { count: 'exact', head: true });
             
             if (error && error.code === '42P01') {
-                console.log('Tabela não existe. Por favor, crie a tabela manualmente no Supabase SQL Editor');
+                console.log('Tabela não existe');
                 updateSyncStatus(false, 'Configure o banco de dados');
                 return false;
             }
@@ -554,9 +579,11 @@
         }
     }
 
-    // Salvar item no Supabase
     async function saveItemToSupabase(departamento, item) {
         try {
+            // Garantir que a data seja salva no formato YYYY-MM-DD sem timezone
+            const deadlineToSave = item.deadline ? localDateToUTC(item.deadline) : null;
+            
             if (item.id) {
                 const { error } = await supabaseClient
                     .from('migracao_tarefas')
@@ -566,7 +593,7 @@
                         status: item.status,
                         area: item.area,
                         responsavel: item.responsavel,
-                        deadline: item.deadline,
+                        deadline: deadlineToSave,
                         updated_at: new Date()
                     })
                     .eq('id', item.id);
@@ -582,7 +609,7 @@
                         status: item.status,
                         area: item.area,
                         responsavel: item.responsavel,
-                        deadline: item.deadline
+                        deadline: deadlineToSave
                     }])
                     .select();
                 
@@ -600,7 +627,6 @@
         }
     }
 
-    // Deletar item do Supabase
     async function deleteItemFromSupabase(itemId) {
         try {
             const { error } = await supabaseClient
@@ -618,7 +644,6 @@
         }
     }
 
-    // Carregar dados do Supabase
     async function loadFromSupabase() {
         showLoading(true);
         updateSyncStatus(true, 'Carregando...');
@@ -646,7 +671,7 @@
                         status: item.status,
                         area: item.area || '',
                         responsavel: item.responsavel || '',
-                        deadline: item.deadline
+                        deadline: item.deadline // Já está no formato YYYY-MM-DD
                     }));
                 } else {
                     appData[dep.id] = [];
@@ -710,15 +735,6 @@ CREATE TABLE IF NOT EXISTS migracao_tarefas (
                 }
             }, 3000);
         }
-    }
-
-    function isDelayed(item) {
-        if (item.status === "concluido") return false;
-        if (!item.deadline) return false;
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const deadlineDate = new Date(item.deadline);
-        return deadlineDate < today;
     }
 
     function getStatusCountsWithDelay(depId) {
@@ -813,10 +829,10 @@ CREATE TABLE IF NOT EXISTS migracao_tarefas (
         currentEditingValues = {};
     }
 
-    // Adicionar evento do botão Exportar Excel
     function setupExportButton() {
         const exportBtn = document.getElementById('btnExportExcel');
         if (exportBtn) {
+            exportBtn.removeEventListener('click', exportToExcel);
             exportBtn.addEventListener('click', exportToExcel);
         }
     }
@@ -853,7 +869,6 @@ CREATE TABLE IF NOT EXISTS migracao_tarefas (
             }
         }
         
-        // Garantir que o botão de exportação esteja configurado
         setupExportButton();
     }
 
@@ -929,7 +944,7 @@ CREATE TABLE IF NOT EXISTS migracao_tarefas (
                         <td><span class="view-mode-text">${escapeHtml(item.responsavel || '-')}</span></td>
                         <td><span class="view-mode-text">${item.status === "pendente" ? "⏳ Pendente" : (item.status === "andamento" ? "⚙️ Em andamento" : "✅ Concluído")}</span></td>
                         <td><span class="${priorityClass}">${item.prioridade}</span></td>
-                        <td><span class="view-mode-text">${item.deadline ? new Date(item.deadline).toLocaleDateString('pt-BR') : '-'}</span></td>
+                        <td><span class="view-mode-text">${item.deadline ? formatDateForDisplay(item.deadline) : '-'}</span></td>
                         <td>${delayedFlag ? '<span class="status-delayed">⚠️ Atrasado</span>' : '<span class="status-ontime">✔ No prazo</span>'}</td>
                         <td>
                             <button class="btn-sm btn-edit" data-action="edit-item">✏️ Editar</button>
@@ -1039,14 +1054,12 @@ CREATE TABLE IF NOT EXISTS migracao_tarefas (
         }); 
     }
 
-    // Backup automático a cada minuto
     setInterval(() => {
         if (Object.keys(appData).length > 0 && initialized) {
             localStorage.setItem("migracao_mhnet_backup", JSON.stringify(appData));
         }
     }, 60000);
 
-    // Inicializar
     loadFromSupabase();
 </script>
 </body>
