@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Migração VALENET → MHNET | Prazos + Responsáveis</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f2f5;
+            padding: 24px 20px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0b2b3b, #0f3b4a);
+            color: white;
+            padding: 24px 28px;
+            border-radius: 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 1.9rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header h1 span {
+            font-weight: 300;
+            opacity: 0.85;
+        }
+
+        .header p {
+            margin-top: 8px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .prazo-badge {
+            background: #ffb74d;
+            color: #2c3e2f;
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-weight: bold;
+            margin-top: 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-excel {
+            position: absolute;
+            top: 24px;
+            right: 28px;
+            background: linear-gradient(135deg, #1e7e34, #28a745);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-excel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #166b2a, #218838);
+        }
+
+        .btn-excel:active {
+            transform: translateY(0);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 28px;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            background: #eef2ff;
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1f3a4b;
+        }
+
+        .tab-btn.active {
+            background: #0f3b4a;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 22px;
+            margin-bottom: 30px;
+        }
+
+        .dept-card {
+            background: white;
+            border-radius: 28px;
+            padding: 18px 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            transition: 0.2s;
+            border-left: 8px solid;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .dept-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        .dept-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .progress-circle {
+            font-weight: bold;
+            background: #e6f7ec;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+        }
+
+        .progress-bar-bg {
+            background: #e2e8f0;
+            border-radius: 20px;
+            height: 10px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #2b7e3a;
+            width: 0%;
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #2c3e50;
+            margin-top: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .delay-warning {
+            background: #fff3e0;
+            border-radius: 16px;
+            padding: 8px 10px;
+            margin-top: 12px;
+            font-size: 0.75rem;
+            border-left: 3px solid #e67e22;
+        }
+
+        .items-panel {
+            background: white;
+            border-radius: 28px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+
+        .btn-add {
+            background: #0f3b4a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 34px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #1a5a6e;
+        }
+
+        .btn-sm {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 28px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0 2px;
+            transition: all 0.2s;
+        }
+
+        .btn-edit { background: #e3f2fd; color: #1976d2; }
+        .btn-edit:hover { background: #1976d2; color: white; }
+        .btn-save { background: #c8e6df; color: #1f6e43; }
+        .btn-save:hover { background: #1f6e43; color: white; }
+        .btn-delete { background: #ffe0e0; color: #b91c1c; }
+        .btn-delete:hover { background: #b91c1c; color: white; }
+        .btn-cancel { background: #e0e0e0; color: #666; }
+        .btn-cancel:hover { background: #666; color: white; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 950px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        td.editing-mode {
+            background-color: #fffbf0;
+        }
+
+        .status-select, .priority-select {
+            padding: 5px 8px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            font-weight: 500;
+            background: white;
+        }
+
+        .inline-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            padding: 6px 12px;
+            width: 100%;
+            font-size: 0.85rem;
+            background: white;
+        }
+
+        .inline-input.editing {
+            background: #fff9c4;
+            border-color: #ff9800;
+        }
+
+        .date-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            padding: 6px 8px;
+            font-size: 0.8rem;
+        }
+
+        .status-delayed {
+            background: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            display: inline-block;
+        }
+
+        .status-ontime {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 8px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+        }
+
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0f3b4a;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            z-index: 100;
+        }
+
+        .view-mode-text {
+            padding: 4px 8px;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        @media (max-width: 700px) {
+            th, td { font-size: 0.7rem; padding: 6px 4px;}
+            .tab-btn { padding: 8px 16px;}
+            .inline-input, .date-input { font-size: 0.7rem; padding: 4px 6px;}
+            .btn-excel { padding: 8px 16px; font-size: 0.75rem; top: 16px; right: 16px; }
+            .btn-excel span { display: none; }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #5c6f87;
+            font-size: 0.8rem;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔄 Migração <span>VALENET</span> → <strong style="color:#ffc107;">MHNET</strong></h1>
+        <p>Acompanhamento com prazos e responsáveis | Prazo total: 4 meses (120 dias)</p>
+        <div class="prazo-badge">👥 Dashboard de tarefas</div>
+        <button class="btn-excel" id="btnExportExcel">
+            📊 Exportar Excel
+        </button>
+    </div>
+
+    <div class="tabs" id="tabsContainer"></div>
+    <div id="mainApp"></div>
+    <footer>✅ Cada tarefa possui: responsável, data limite, status e prioridade. Dashboard calcula atrasos e progresso.</footer>
+</div>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">Carregando dados...</div>
+</div>
+<div class="sync-status" id="syncStatus">🔄 Inicializando...</div>
+
+<script>
+    // Supabase configuration
+    const SUPABASE_URL = 'https://euonqsiqdleaopneznxj.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_obwfB8Tnvcli6t16BXaqPQ_8bTnb0ve';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Departamentos
+    const departamentos = [
+        { id: "estrutura", nome: "🏢 Estrutura Física / Loja", cor: "#2c6e2f" },
+        { id: "redes", nome: "🌐 Redes / TI / Sistemas", cor: "#1e4a76" },
+        { id: "financeiro", nome: "💰 Financeiro", cor: "#b85c1a" },
+        { id: "atendimento", nome: "📞 Atendimento / Suporte", cor: "#a23d72" },
+        { id: "tecnicos", nome: "🚗 Técnicos / Campo", cor: "#3b7b5e" },
+        { id: "marketing", nome: "📣 Marketing / Comunicação", cor: "#c47b2d" },
+        { id: "juridico", nome: "📑 Jurídico / Regulatório", cor: "#5d3a1a" },
+        { id: "gestao", nome: "📊 Gestão / Operação", cor: "#2b5f8a" }
+    ];
+
+    let appData = {};
+    let activeTabId = "resumo";
+    let isSaving = false;
+    let initialized = false;
+    let editingRowId = null;
+    let currentEditingValues = {};
+
+    function getDefaultDeadline(daysOffset = 45) {
+        const d = new Date();
+        d.setDate(d.getDate() + daysOffset);
+        return d.toISOString().split('T')[0];
+    }
+
+    // Função para exportar para Excel
+    function exportToExcel() {
+        try {
+            showLoading(true);
+            
+            // Preparar dados para exportação
+            const exportData = [];
+            
+            // Cabeçalhos
+            const headers = [
+                'departamento',
+                'nome',
+                'prioridade',
+                'status',
+                'area',
+                'responsavel',
+                'deadline',
+                'prazo'
+            ];
+            
+            // Mapeamento de status para exibição
+            const statusMap = {
+                'pendente': '⏳ Pendente',
+                'andamento': '⚙️ Em andamento',
+                'concluido': '✅ Concluído'
+            };
+            
+            // Coletar todos os dados
+            for (let dep of departamentos) {
+                const items = appData[dep.id] || [];
+                for (let item of items) {
+                    // Calcular prazo
+                    let prazoStatus = '';
+                    if (item.status === 'concluido') {
+                        prazoStatus = '✅ Concluído';
+                    } else if (isDelayed(item)) {
+                        prazoStatus = '⚠️ Atrasado';
+                    } else {
+                        prazoStatus = '✔ No prazo';
+                    }
+                    
+                    exportData.push({
+                        departamento: dep.nome.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').trim(), // Remove emojis
+                        nome: item.nome,
+                        prioridade: item.prioridade,
+                        status: statusMap[item.status] || item.status,
+                        area: item.area || '',
+                        responsavel: item.responsavel || '',
+                        deadline: item.deadline ? new Date(item.deadline).toLocaleDateString('pt-BR') : '',
+                        prazo: prazoStatus
+                    });
+                }
+            }
+            
+            // Criar worksheet
+            const wsData = [headers, ...exportData.map(row => [
+                row.departamento,
+                row.nome,
+                row.prioridade,
+                row.status,
+                row.area,
+                row.responsavel,
+                row.deadline,
+                row.prazo
+            ])];
+            
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 25 }, // departamento
+                { wch: 40 }, // nome
+                { wch: 12 }, // prioridade
+                { wch: 18 }, // status
+                { wch: 25 }, // area
+                { wch: 25 }, // responsavel
+                { wch: 15 }, // deadline
+                { wch: 15 }  // prazo
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Estilizar cabeçalho
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ r: 0, c: C });
+                if (!ws[address]) continue;
+                ws[address].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "0F3B4A" } },
+                    alignment: { horizontal: "center" }
+                };
+            }
+            
+            // Criar workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Migracao_MHNET");
+            
+            // Gerar nome do arquivo com data atual
+            const now = new Date();
+            const fileName = `Migracao_VALENET_MHNET_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.xlsx`;
+            
+            // Exportar
+            XLSX.writeFile(wb, fileName);
+            
+            updateSyncStatus(true, `Exportado ${exportData.length} tarefas`);
+        } catch (error) {
+            console.error('Erro ao exportar Excel:', error);
+            updateSyncStatus(false, 'Erro ao exportar');
+            alert('Erro ao gerar arquivo Excel. Verifique o console para mais detalhes.');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Criar tabela no Supabase
+    async function createTables() {
+        try {
+            const { error } = await supabaseClient
+                .from('migracao_tarefas')
+                .select('count', { count: 'exact', head: true });
+            
+            if (error && error.code === '42P01') {
+                console.log('Tabela não existe. Por favor, crie a tabela manualmente no Supabase SQL Editor');
+                updateSyncStatus(false, 'Configure o banco de dados');
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error('Erro ao verificar tabela:', error);
+            return false;
+        }
+    }
+
+    // Salvar item no Supabase
+    async function saveItemToSupabase(departamento, item) {
+        try {
+            if (item.id) {
+                const { error } = await supabaseClient
+                    .from('migracao_tarefas')
+                    .update({
+                        nome: item.nome,
+                        prioridade: item.prioridade,
+                        status: item.status,
+                        area: item.area,
+                        responsavel: item.responsavel,
+                        deadline: item.deadline,
+                        updated_at: new Date()
+                    })
+                    .eq('id', item.id);
+                
+                if (error) throw error;
+            } else {
+                const { data, error } = await supabaseClient
+                    .from('migracao_tarefas')
+                    .insert([{
+                        departamento: departamento,
+                        nome: item.nome,
+                        prioridade: item.prioridade,
+                        status: item.status,
+                        area: item.area,
+                        responsavel: item.responsavel,
+                        deadline: item.deadline
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                if (data && data[0]) {
+                    item.id = data[0].id;
+                }
+            }
+            updateSyncStatus(true, 'Salvo');
+            return true;
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+            updateSyncStatus(false, 'Erro ao salvar');
+            return false;
+        }
+    }
+
+    // Deletar item do Supabase
+    async function deleteItemFromSupabase(itemId) {
+        try {
+            const { error } = await supabaseClient
+                .from('migracao_tarefas')
+                .delete()
+                .eq('id', itemId);
+            
+            if (error) throw error;
+            updateSyncStatus(true, 'Excluído');
+            return true;
+        } catch (error) {
+            console.error('Erro ao deletar:', error);
+            updateSyncStatus(false, 'Erro ao excluir');
+            return false;
+        }
+    }
+
+    // Carregar dados do Supabase
+    async function loadFromSupabase() {
+        showLoading(true);
+        updateSyncStatus(true, 'Carregando...');
+        
+        try {
+            const tableExists = await createTables();
+            if (!tableExists) {
+                showLoading(false);
+                renderEmptyState();
+                return;
+            }
+
+            for (let dep of departamentos) {
+                const { data, error } = await supabaseClient
+                    .from('migracao_tarefas')
+                    .select('*')
+                    .eq('departamento', dep.id)
+                    .order('created_at', { ascending: true });
+                
+                if (!error && data) {
+                    appData[dep.id] = data.map(item => ({
+                        id: item.id,
+                        nome: item.nome,
+                        prioridade: item.prioridade,
+                        status: item.status,
+                        area: item.area || '',
+                        responsavel: item.responsavel || '',
+                        deadline: item.deadline
+                    }));
+                } else {
+                    appData[dep.id] = [];
+                }
+            }
+            
+            updateSyncStatus(true, 'Dados carregados');
+        } catch (error) {
+            console.error('Erro ao carregar:', error);
+            updateSyncStatus(false, 'Erro ao carregar dados');
+        } finally {
+            showLoading(false);
+            renderAll();
+            initialized = true;
+        }
+    }
+
+    function renderEmptyState() {
+        const mainDiv = document.getElementById("mainApp");
+        if (mainDiv) {
+            mainDiv.innerHTML = `
+                <div class="items-panel">
+                    <h3>📌 Configure o Banco de Dados</h3>
+                    <p>Por favor, crie a tabela no Supabase SQL Editor com o seguinte comando:</p>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 15px;">
+CREATE TABLE IF NOT EXISTS migracao_tarefas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    departamento TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    prioridade TEXT NOT NULL,
+    status TEXT NOT NULL,
+    area TEXT,
+    responsavel TEXT,
+    deadline DATE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+                    </pre>
+                    <button class="btn-add" onclick="location.reload()" style="margin-top: 20px;">🔄 Recarregar após criar tabela</button>
+                </div>
+            `;
+        }
+    }
+
+    function showLoading(show) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = show ? 'flex' : 'none';
+        }
+    }
+
+    function updateSyncStatus(success, message) {
+        const statusEl = document.getElementById('syncStatus');
+        if (statusEl) {
+            statusEl.textContent = success ? `✅ ${message}` : `⚠️ ${message}`;
+            statusEl.style.backgroundColor = success ? '#2e7d32' : '#f57c00';
+            setTimeout(() => {
+                if (initialized && statusEl.textContent.includes(message)) {
+                    statusEl.style.backgroundColor = '#0f3b4a';
+                    statusEl.textContent = '✅ Sincronizado';
+                }
+            }, 3000);
+        }
+    }
+
+    function isDelayed(item) {
+        if (item.status === "concluido") return false;
+        if (!item.deadline) return false;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const deadlineDate = new Date(item.deadline);
+        return deadlineDate < today;
+    }
+
+    function getStatusCountsWithDelay(depId) {
+        const items = appData[depId] || [];
+        const total = items.length;
+        const concluidos = items.filter(i => i.status === "concluido").length;
+        const andamento = items.filter(i => i.status === "andamento").length;
+        const pendentes = total - concluidos - andamento;
+        const atrasados = items.filter(i => isDelayed(i)).length;
+        const percent = total === 0 ? 0 : Math.round((concluidos / total) * 100);
+        return { total, concluidos, andamento, pendentes, atrasados, percent };
+    }
+
+    async function addNewItem(depId) {
+        const newId = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+        const newItem = {
+            id: newId,
+            nome: "Nova tarefa",
+            prioridade: "Média",
+            status: "pendente",
+            area: "",
+            responsavel: "",
+            deadline: getDefaultDeadline()
+        };
+        appData[depId].push(newItem);
+        await saveItemToSupabase(depId, newItem);
+        renderAll();
+        setTimeout(() => {
+            enterEditMode(newId, depId);
+        }, 100);
+    }
+
+    async function deleteItem(depId, itemId) {
+        if (confirm("Excluir item permanentemente?")) {
+            const success = await deleteItemFromSupabase(itemId);
+            if (success) {
+                appData[depId] = appData[depId].filter(i => i.id !== itemId);
+                if (editingRowId === itemId) {
+                    cancelEdit();
+                }
+                renderAll();
+            }
+        }
+    }
+
+    function enterEditMode(itemId, depId) {
+        if (editingRowId) {
+            cancelEdit();
+        }
+        
+        const item = appData[depId].find(i => i.id === itemId);
+        if (item) {
+            editingRowId = itemId;
+            currentEditingValues = { ...item };
+            renderAll();
+            
+            setTimeout(() => {
+                const firstInput = document.querySelector(`#row-${itemId} .inline-input.editing`);
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+    }
+
+    async function saveEdit(itemId, depId) {
+        const itemIndex = appData[depId].findIndex(i => i.id === itemId);
+        if (itemIndex !== -1) {
+            const row = document.getElementById(`row-${itemId}`);
+            if (row) {
+                const nomeInput = row.querySelector(".edit-nome");
+                const areaInput = row.querySelector(".edit-area");
+                const responsavelInput = row.querySelector(".edit-responsavel");
+                const statusSelect = row.querySelector(".edit-status");
+                const prioritySelect = row.querySelector(".edit-prioridade");
+                const deadlineInput = row.querySelector(".edit-deadline");
+                
+                if (nomeInput) appData[depId][itemIndex].nome = nomeInput.value;
+                if (areaInput) appData[depId][itemIndex].area = areaInput.value;
+                if (responsavelInput) appData[depId][itemIndex].responsavel = responsavelInput.value;
+                if (statusSelect) appData[depId][itemIndex].status = statusSelect.value;
+                if (prioritySelect) appData[depId][itemIndex].prioridade = prioritySelect.value;
+                if (deadlineInput) appData[depId][itemIndex].deadline = deadlineInput.value;
+            }
+            
+            await saveItemToSupabase(depId, appData[depId][itemIndex]);
+            cancelEdit();
+            renderAll();
+        }
+    }
+
+    function cancelEdit() {
+        editingRowId = null;
+        currentEditingValues = {};
+    }
+
+    // Adicionar evento do botão Exportar Excel
+    function setupExportButton() {
+        const exportBtn = document.getElementById('btnExportExcel');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportToExcel);
+        }
+    }
+
+    function renderAll() {
+        const tabsContainer = document.getElementById("tabsContainer");
+        const mainDiv = document.getElementById("mainApp");
+        if(!tabsContainer || !mainDiv) return;
+        
+        let tabsHtml = `<button class="tab-btn ${activeTabId === 'resumo' ? 'active' : ''}" data-tab="resumo">📊 RESUMO GERAL</button>`;
+        departamentos.forEach(dep => {
+            const stats = getStatusCountsWithDelay(dep.id);
+            tabsHtml += `<button class="tab-btn ${activeTabId === dep.id ? 'active' : ''}" data-tab="${dep.id}">${dep.nome} (${stats.total})</button>`;
+        });
+        tabsContainer.innerHTML = tabsHtml;
+        
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                activeTabId = btn.getAttribute("data-tab");
+                cancelEdit();
+                renderAll();
+            });
+        });
+        
+        if(activeTabId === "resumo") {
+            mainDiv.innerHTML = renderDashboardResumo();
+        } else {
+            const dep = departamentos.find(d => d.id === activeTabId);
+            if(dep) {
+                mainDiv.innerHTML = renderDepartmentPanel(dep.id, dep.nome);
+                attachTableEvents(dep.id);
+            } else {
+                mainDiv.innerHTML = "<p>Departamento não encontrado</p>";
+            }
+        }
+        
+        // Garantir que o botão de exportação esteja configurado
+        setupExportButton();
+    }
+
+    function renderDashboardResumo() {
+        let gridHtml = `<div class="dashboard-grid">`;
+        for(let dep of departamentos) {
+            const stats = getStatusCountsWithDelay(dep.id);
+            const items = appData[dep.id] || [];
+            const atrasadosList = items.filter(i => isDelayed(i)).map(i => i.nome).slice(0,3);
+            const cor = dep.cor;
+            gridHtml += `
+                <div class="dept-card" onclick="document.querySelector('[data-tab=\'${dep.id}\']').click();" style="border-left-color: ${cor};">
+                    <h3>${dep.nome} <span class="progress-circle">${stats.percent}%</span></h3>
+                    <div class="progress-bar-bg"><div class="progress-fill" style="width: ${stats.percent}%; background: ${cor};"></div></div>
+                    <div class="stats">
+                        <span>✅ ${stats.concluidos} concluídos</span>
+                        <span>⚙️ ${stats.andamento} andamento</span>
+                        <span>⏳ ${stats.pendentes} pendentes</span>
+                        <span>⚠️ ${stats.atrasados} atrasados</span>
+                    </div>
+                    ${stats.atrasados > 0 ? `<div class="delay-warning">🚨 Atrasados: ${atrasadosList.join(', ')}${stats.atrasados > 3 ? ` +${stats.atrasados-3} outros` : ''}</div>` : '<div class="delay-warning" style="background:#e8f5e9; border-left-color:#2e7d32;">✅ Nenhuma tarefa atrasada!</div>'}
+                </div>
+            `;
+        }
+        gridHtml += `</div><div class="items-panel"><h3>📈 Gestão por Responsáveis</h3><p>👥 Cada tarefa possui um responsável nominal. Utilize as abas para gerenciar as tarefas de cada departamento.</p><p>🔔 Tarefas não concluídas com data limite anterior a hoje são consideradas ATRASADAS.</p><p>💡 Clique em um card para acessar as tarefas do departamento.</p></div>`;
+        return gridHtml;
+    }
+
+    function renderDepartmentPanel(depId, depNome) {
+        const items = appData[depId] || [];
+        const stats = getStatusCountsWithDelay(depId);
+        
+        let tableRows = "";
+        items.forEach((item) => {
+            const isEditing = editingRowId === item.id;
+            const delayedFlag = isDelayed(item);
+            
+            if (isEditing) {
+                tableRows += `
+                    <tr id="row-${item.id}" class="editing-mode">
+                        <td><input type="text" class="inline-input editing edit-nome" value="${escapeHtml(item.nome)}" style="min-width:140px;"></td>
+                        <td><input type="text" class="inline-input editing edit-area" value="${escapeHtml(item.area || '')}" style="width:110px;"></td>
+                        <td><input type="text" class="inline-input editing edit-responsavel" value="${escapeHtml(item.responsavel || '')}" style="width:130px;" placeholder="Nome do responsável"></td>
+                        <td>
+                            <select class="status-select edit-status">
+                                <option value="pendente" ${item.status === "pendente" ? "selected" : ""}>⏳ Pendente</option>
+                                <option value="andamento" ${item.status === "andamento" ? "selected" : ""}>⚙️ Em andamento</option>
+                                <option value="concluido" ${item.status === "concluido" ? "selected" : ""}>✅ Concluído</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="priority-select edit-prioridade">
+                                <option value="Alta" ${item.prioridade === "Alta" ? "selected" : ""}>Alta</option>
+                                <option value="Média" ${item.prioridade === "Média" ? "selected" : ""}>Média</option>
+                                <option value="Baixa" ${item.prioridade === "Baixa" ? "selected" : ""}>Baixa</option>
+                            </select>
+                        </td>
+                        <td><input type="date" class="date-input edit-deadline" value="${item.deadline || ''}" style="width:125px;"></td>
+                        <td>${delayedFlag ? '<span class="status-delayed">⚠️ Atrasado</span>' : '<span class="status-ontime">✔ No prazo</span>'}</td>
+                        <td>
+                            <button class="btn-sm btn-save" data-action="save-edit">💾 Salvar</button>
+                            <button class="btn-sm btn-cancel" data-action="cancel-edit">✖️ Cancelar</button>
+                            <button class="btn-sm btn-delete" data-action="delete-item">🗑️ Excluir</button>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                const priorityClass = item.prioridade === "Alta" ? "priority-high" : (item.prioridade === "Média" ? "priority-medium" : "priority-low");
+                tableRows += `
+                    <tr id="row-${item.id}">
+                        <td><span class="view-mode-text">${escapeHtml(item.nome)}</span></td>
+                        <td><span class="view-mode-text">${escapeHtml(item.area || '-')}</span></td>
+                        <td><span class="view-mode-text">${escapeHtml(item.responsavel || '-')}</span></td>
+                        <td><span class="view-mode-text">${item.status === "pendente" ? "⏳ Pendente" : (item.status === "andamento" ? "⚙️ Em andamento" : "✅ Concluído")}</span></td>
+                        <td><span class="${priorityClass}">${item.prioridade}</span></td>
+                        <td><span class="view-mode-text">${item.deadline ? new Date(item.deadline).toLocaleDateString('pt-BR') : '-'}</span></td>
+                        <td>${delayedFlag ? '<span class="status-delayed">⚠️ Atrasado</span>' : '<span class="status-ontime">✔ No prazo</span>'}</td>
+                        <td>
+                            <button class="btn-sm btn-edit" data-action="edit-item">✏️ Editar</button>
+                            <button class="btn-sm btn-delete" data-action="delete-item">🗑️ Excluir</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+        
+        if (items.length === 0) {
+            tableRows = `
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 40px;">
+                        📭 Nenhuma tarefa cadastrada. Clique em "Adicionar" para começar.
+                    </td>
+                </tr>
+            `;
+        }
+        
+        return `
+            <div class="items-panel">
+                <div class="toolbar">
+                    <div><strong>${depNome}</strong> — ${stats.concluidos}/${stats.total} concluídos | ⚠️ ${stats.atrasados} atrasados</div>
+                    <button class="btn-add" id="btnAddNewItem">➕ Adicionar novo item</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th><th>Área</th><th>Responsável</th><th>Status</th><th>Prioridade</th><th>Data Limite</th><th>Prazo</th><th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody-${depId}">${tableRows}</tbody>
+                    </table>
+                </div>
+                <p style="margin-top:16px; font-size:12px;">✏️ <strong>Como usar:</strong> Clique em "Editar" para modificar a tarefa, depois em "Salvar" para confirmar as alterações. Use "Cancelar" para desfazer.</p>
+            </div>
+        `;
+    }
+
+    function attachTableEvents(depId) {
+        const tbody = document.getElementById(`tableBody-${depId}`);
+        if(!tbody) return;
+        
+        const editBtns = tbody.querySelectorAll("button[data-action='edit-item']");
+        editBtns.forEach(btn => {
+            btn.removeEventListener('click', editHandler);
+            btn.addEventListener('click', editHandler);
+        });
+        
+        const saveEditBtns = tbody.querySelectorAll("button[data-action='save-edit']");
+        saveEditBtns.forEach(btn => {
+            btn.removeEventListener('click', saveEditHandler);
+            btn.addEventListener('click', saveEditHandler);
+        });
+        
+        const cancelEditBtns = tbody.querySelectorAll("button[data-action='cancel-edit']");
+        cancelEditBtns.forEach(btn => {
+            btn.removeEventListener('click', cancelEditHandler);
+            btn.addEventListener('click', cancelEditHandler);
+        });
+        
+        const delBtns = tbody.querySelectorAll("button[data-action='delete-item']");
+        delBtns.forEach(btn => {
+            btn.removeEventListener('click', deleteHandler);
+            btn.addEventListener('click', deleteHandler);
+        });
+        
+        const addBtn = document.getElementById("btnAddNewItem");
+        if(addBtn && !addBtn.hasListener) {
+            addBtn.addEventListener("click", () => addNewItem(depId));
+            addBtn.hasListener = true;
+        }
+        
+        function editHandler(e) {
+            const row = e.target.closest("tr");
+            const itemId = row.getAttribute("id").replace('row-', '');
+            enterEditMode(itemId, depId);
+        }
+        
+        async function saveEditHandler(e) {
+            const row = e.target.closest("tr");
+            const itemId = row.getAttribute("id").replace('row-', '');
+            await saveEdit(itemId, depId);
+        }
+        
+        function cancelEditHandler(e) {
+            cancelEdit();
+            renderAll();
+        }
+        
+        async function deleteHandler(e) {
+            const row = e.target.closest("tr");
+            const itemId = row.getAttribute("id").replace('row-', '');
+            await deleteItem(depId, itemId);
+        }
+    }
+
+    function escapeHtml(str) { 
+        if(!str) return ''; 
+        return str.replace(/[&<>]/g, function(m){ 
+            if(m==='&') return '&amp;'; 
+            if(m==='<') return '&lt;'; 
+            if(m==='>') return '&gt;'; 
+            return m;
+        }); 
+    }
+
+    // Backup automático a cada minuto
+    setInterval(() => {
+        if (Object.keys(appData).length > 0 && initialized) {
+            localStorage.setItem("migracao_mhnet_backup", JSON.stringify(appData));
+        }
+    }, 60000);
+
+    // Inicializar
+    loadFromSupabase();
+</script>
+</body>
+</html>
